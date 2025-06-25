@@ -4,7 +4,6 @@ import sys
 from PyQt5.QtCore import Qt, QTimer, QDateTime, QTime, QDate, QDateTime as QDt
 from PyQt5.QtWidgets import (
     QApplication,
-    QGridLayout,
     QHBoxLayout,
     QLabel,
     QMainWindow,
@@ -30,7 +29,7 @@ from typing import Any
 
 from communication import start_server, send_message
 from database import SmartHomeDB
-from devices import DEVICES, Device
+from floor_plan import FloorPlanView, devices, PlanDevice
 from data_generator import (
     add_variation,
     analyze_pattern,
@@ -66,17 +65,9 @@ class MainPanel(QMainWindow):
         content_layout = QHBoxLayout()
         root_layout.addLayout(content_layout, 1)
 
-        # Floor plan with device buttons (left 60%)
-        floor_widget = QWidget()
-        grid = QGridLayout(floor_widget)
-        self.device_buttons = []
-        for i, device in enumerate(DEVICES):
-            btn = QPushButton(f"{device.name}: OFF")
-            btn.setCheckable(True)
-            btn.clicked.connect(lambda _, d=device, b=btn: self.toggle_device(d, b))
-            grid.addWidget(btn, i // 2, i % 2)
-            self.device_buttons.append(btn)
-        content_layout.addWidget(floor_widget, 3)
+        # Floor plan view with interactive icons
+        self.floor_view = FloorPlanView(devices, callback=self.device_clicked)
+        content_layout.addWidget(self.floor_view, 3)
 
         # Right side (clock and control panel)
         side_widget = QWidget()
@@ -112,12 +103,11 @@ class MainPanel(QMainWindow):
             QDateTime.currentDateTime().toString("yyyy-MM-dd hh:mm:ss")
         )
 
-    def toggle_device(self, device, button) -> None:
-        device.toggle()
+    def device_clicked(self, device: PlanDevice) -> None:
         state = "ON" if device.state else "OFF"
-        button.setText(f"{device.name}: {state}")
         self.control_log.append(f"디바이스 '{device.name}'을(를) {state} 상태로 변경했습니다.")
         self.db.update_device_status(device.name, state)
+
 
     # ------------------------------------------------------------------
     # Tab initializers
@@ -128,7 +118,7 @@ class MainPanel(QMainWindow):
 
         form_layout = QHBoxLayout()
         self.data_device = QComboBox()
-        for d in DEVICES:
+        for d in devices:
             self.data_device.addItem(d.name)
         form_layout.addWidget(self.data_device)
 
@@ -333,15 +323,14 @@ class MainPanel(QMainWindow):
         device_name = event["device"]
         value = event["value"]
         if device_name == "모든조명":
-            targets = [d for d in DEVICES if "조명" in d.name]
+            targets = [d for d in devices if "조명" in d.name]
         else:
-            targets = [d for d in DEVICES if d.name == device_name]
+            targets = [d for d in devices if d.name == device_name]
         for dev in targets:
             dev.state = value == "ON"
-        for btn, dev in zip(self.device_buttons, DEVICES):
+        self.floor_view.refresh()
+        for dev in devices:
             state = "ON" if dev.state else "OFF"
-            btn.setText(f"{dev.name}: {state}")
-            btn.setChecked(dev.state)
             self.db.update_device_status(dev.name, state)
         self.db.save_pattern(event["timestamp"], device_name, value)
         ts = event["timestamp"].strftime("%Y-%m-%d %H:%M")
