@@ -28,7 +28,8 @@ from datetime import datetime, date, timedelta
 
 from typing import Any
 
-from communication import start_server
+from communication import start_server, send_message
+from database import SmartHomeDB
 from devices import DEVICES, Device
 from data_generator import (
     add_variation,
@@ -45,6 +46,7 @@ class MainPanel(QMainWindow):
         super().__init__()
         self.setWindowTitle("스마트홈 패널")
         self.resize(900, 600)
+        self.db = SmartHomeDB()
         self._init_ui()
         start_server(self.receive_message)
 
@@ -115,6 +117,7 @@ class MainPanel(QMainWindow):
         state = "ON" if device.state else "OFF"
         button.setText(f"{device.name}: {state}")
         self.control_log.append(f"디바이스 '{device.name}'을(를) {state} 상태로 변경했습니다.")
+        self.db.update_device_status(device.name, state)
 
     # ------------------------------------------------------------------
     # Tab initializers
@@ -299,6 +302,9 @@ class MainPanel(QMainWindow):
             self.load_csv()
         if not self.loaded_events:
             return
+        # Prepare pattern detection map
+        self.detected_patterns = analyze_pattern(self.loaded_events)
+        self.sent_patterns: set[tuple[str, str]] = set()
 
         self.service_running = True
         self.play_btn.setText("Pause")
@@ -336,8 +342,21 @@ class MainPanel(QMainWindow):
             state = "ON" if dev.state else "OFF"
             btn.setText(f"{dev.name}: {state}")
             btn.setChecked(dev.state)
+            self.db.update_device_status(dev.name, state)
+        self.db.save_pattern(event["timestamp"], device_name, value)
         ts = event["timestamp"].strftime("%Y-%m-%d %H:%M")
         self.service_log.append(f"{ts} - {device_name} {value}")
+
+        time_key = event["timestamp"].strftime("%H:%M")
+        if (
+            getattr(self, "detected_patterns", None)
+            and self.chat_notify.isChecked()
+            and device_name in self.detected_patterns
+            and self.detected_patterns[device_name].get(time_key)
+            and (device_name, time_key) not in self.sent_patterns
+        ):
+            send_message(f"패턴 감지: {device_name} {time_key} {value}")
+            self.sent_patterns.add((device_name, time_key))
 
     # ----- query tab -----
 

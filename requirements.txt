@@ -1,2 +1,4 @@
 # Python dependencies
-PyQt5
+PyQt5==5.15.9
+pandas==1.5.3
+python-socketio==5.9.0
