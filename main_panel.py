@@ -483,7 +483,10 @@ class MainPanel(QMainWindow):
             self.apply_event(event)
             self.service_index += 1
         if self.sim_end_time and self.sim_time >= self.sim_end_time:
-            self.toggle_service()
+            # Restart the service from the beginning once the
+            # simulation period is finished.
+            self.toggle_service()  # stop the current run
+            self.toggle_service()  # start a new run from the beginning
 
     def apply_event(self, event: dict) -> None:
         device_name = event["device"]
