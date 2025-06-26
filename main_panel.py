@@ -107,6 +107,9 @@ class MainPanel(QMainWindow):
         state = "ON" if device.state else "OFF"
         self.control_log.append(f"디바이스 '{device.name}'을(를) {state} 상태로 변경했습니다.")
         self.db.update_device_status(device.name, state)
+        ts = self.sim_time if self.service_running and self.sim_time else datetime.now()
+        self.db.save_pattern(ts, device.name, state)
+        self.service_log.append(f"{ts.strftime('%Y-%m-%d %H:%M')} - {device.name} {state}")
 
 
     # ------------------------------------------------------------------
@@ -176,13 +179,21 @@ class MainPanel(QMainWindow):
         layout = QVBoxLayout(tab)
 
         top = QHBoxLayout()
-        self.play_btn = QPushButton("Play")
+        self.play_btn = QPushButton("Play and Record")
         self.play_btn.clicked.connect(self.toggle_service)
         top.addWidget(self.play_btn)
+
+        self.step_btn = QPushButton("Play by Tap and Record")
+        self.step_btn.clicked.connect(self.step_service)
+        top.addWidget(self.step_btn)
 
         self.speed_box = QComboBox()
         self.speed_box.addItems(["1x", "10x", "60x"])
         top.addWidget(self.speed_box)
+
+        self.duration_box = QComboBox()
+        self.duration_box.addItems(["24h", "1w"])
+        top.addWidget(self.duration_box)
 
         self.current_time_label = QLabel("--:--")
         top.addWidget(self.current_time_label)
@@ -195,7 +206,11 @@ class MainPanel(QMainWindow):
         self.service_timer = QTimer(self)
         self.service_timer.timeout.connect(self.advance_service)
         self.service_running = False
+        self.step_mode = False
+        self.paused_for_chatbot = False
+        self.pending_event: dict | None = None
         self.sim_time: datetime | None = None
+        self.sim_end_time: datetime | None = None
         self.service_index = 0
 
 
@@ -230,6 +245,17 @@ class MainPanel(QMainWindow):
         """Callback for messages received from the chatbot."""
 
         self.control_log.append(f"챗봇: {message}")
+        if self.paused_for_chatbot:
+            if message.strip() == "CREATE_RULE" and self.pending_event:
+                cond = self.pending_event["timestamp"].strftime("%H:%M")
+                act = self.pending_event["value"]
+                dev = self.pending_event["device"]
+                self.db.save_rule(f"time == {cond}", f"{dev} {act}")
+                self.control_log.append(f"규칙 생성: time == {cond} -> {dev} {act}")
+            self.pending_event = None
+            self.paused_for_chatbot = False
+            if self.service_running and not self.step_mode:
+                self.service_timer.start(1000)
 
     # ------------------------------------------------------------------
     # Tab actions
@@ -282,10 +308,13 @@ class MainPanel(QMainWindow):
     # ----- service -----
 
     def toggle_service(self) -> None:
-        if self.service_running:
+        if self.service_running and not self.paused_for_chatbot:
             self.service_timer.stop()
             self.service_running = False
-            self.play_btn.setText("Play")
+            self.play_btn.setText("Play and Record")
+            self.step_mode = False
+            self.play_btn.setEnabled(True)
+            self.sim_end_time = None
             return
 
         if not self.loaded_events:
@@ -297,14 +326,43 @@ class MainPanel(QMainWindow):
         self.sent_patterns: set[tuple[str, str]] = set()
 
         self.service_running = True
+        self.step_mode = False
+        self.paused_for_chatbot = False
         self.play_btn.setText("Pause")
         self.sim_time = self.loaded_events[0]["timestamp"]
+        if self.duration_box.currentText() == "24h":
+            self.sim_end_time = self.sim_time + timedelta(hours=24)
+        else:
+            self.sim_end_time = self.sim_time + timedelta(days=7)
         self.service_index = 0
         self.current_time_label.setText(self.sim_time.strftime("%Y-%m-%d %H:%M"))
         self.service_timer.start(1000)
 
+    def step_service(self) -> None:
+        if not self.service_running:
+            if not self.loaded_events:
+                self.load_csv()
+            if not self.loaded_events:
+                return
+            self.detected_patterns = analyze_pattern(self.loaded_events)
+            self.sent_patterns = set()
+            self.service_running = True
+            self.step_mode = True
+            self.play_btn.setEnabled(False)
+            self.paused_for_chatbot = False
+            self.sim_time = self.loaded_events[0]["timestamp"]
+            if self.duration_box.currentText() == "24h":
+                self.sim_end_time = self.sim_time + timedelta(hours=24)
+            else:
+                self.sim_end_time = self.sim_time + timedelta(days=7)
+            self.service_index = 0
+            self.current_time_label.setText(self.sim_time.strftime("%Y-%m-%d %H:%M"))
+        if self.paused_for_chatbot:
+            return
+        self.advance_service()
+
     def advance_service(self) -> None:
-        if not self.service_running or self.sim_time is None:
+        if not self.service_running or self.sim_time is None or self.paused_for_chatbot:
             return
         speed = int(self.speed_box.currentText().replace("x", ""))
         self.sim_time += timedelta(minutes=speed)
@@ -316,7 +374,7 @@ class MainPanel(QMainWindow):
             event = self.loaded_events[self.service_index]
             self.apply_event(event)
             self.service_index += 1
-        if self.service_index >= len(self.loaded_events):
+        if self.sim_end_time and self.sim_time >= self.sim_end_time:
             self.toggle_service()
 
     def apply_event(self, event: dict) -> None:
@@ -346,6 +404,9 @@ class MainPanel(QMainWindow):
         ):
             send_message(f"패턴 감지: {device_name} {time_key} {value}")
             self.sent_patterns.add((device_name, time_key))
+            self.pending_event = event
+            self.paused_for_chatbot = True
+            self.service_timer.stop()
 
     # ----- query tab -----
 
