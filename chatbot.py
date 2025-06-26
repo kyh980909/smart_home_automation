@@ -31,8 +31,9 @@ class ChatBot(QWidget):
         self.resize(400, 300)
         self.history: List[str] = []
         self._init_ui()
-        # Start socket server to receive messages from the panel
-        communication.start_server(self.receive_message)
+        # Start socket server to receive messages from the panel on a
+        # different port to avoid clashing with the panel's server
+        communication.start_server(self.receive_message, port=7778)
 
     def _init_ui(self) -> None:
         layout = QVBoxLayout(self)

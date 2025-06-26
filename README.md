@@ -27,6 +27,9 @@ data/
 python3 main_panel.py   # 패널 실행
 python3 chatbot.py      # 챗봇 실행
 ```
+패널은 기본적으로 포트 `7777`에서, 챗봇은 포트 `7778`에서 동작합니다.
+필요하다면 `communication.start_server()`와 `send_message()` 함수의
+`host`/`port` 인자를 수정해 다른 포트를 사용할 수 있습니다.
 
 두 프로그램을 동시에 실행하면 패널에서 감지한 패턴이나 사용자 명령이 챗봇으로
 전송되고, 챗봇에서 Yes/No 버튼이나 직접 입력으로 답할 수 있습니다.
