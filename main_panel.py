@@ -362,10 +362,8 @@ class MainPanel(QMainWindow):
 
     def receive_message(self, message: str) -> None:
         """Callback for messages received from the chatbot."""
-        self.control_log.append(f"챗봇: {message}")
-        
-        # 개선된 챗봇 메시지 처리
-        self._handle_chatbot_command(message)
+        # 메시지는 별도의 스레드에서 전달되므로 시그널을 통해 UI 스레드로 전달
+        self.message_received.emit(message)
 
     def _handle_chatbot_command(self, message: str) -> None:
         """챗봇으로부터의 명령어 처리"""
@@ -449,7 +447,12 @@ class MainPanel(QMainWindow):
         pass
 
     def _handle_chat_message(self, message: str) -> None:
+        """Handle messages from the chatbot on the UI thread."""
         self.control_log.append(f"챗봇: {message}")
+
+        # 우선 명령어 처리
+        self._handle_chatbot_command(message)
+
         if self.paused_for_chatbot:
             if message.strip() == "CREATE_RULE" and self.pending_event:
                 cond = self.pending_event["timestamp"].strftime("%H:%M")
