@@ -28,7 +28,7 @@ from datetime import datetime, date, timedelta
 from typing import Any
 
 from communication import start_server, send_message
-from database import SmartHomeDB
+from csv_database import SmartHomeCSV
 from floor_plan import FloorPlanView, devices, PlanDevice
 from data_generator import (
     add_variation,
@@ -45,7 +45,7 @@ class MainPanel(QMainWindow):
         super().__init__()
         self.setWindowTitle("스마트홈 패널")
         self.resize(1280, 960)
-        self.db = SmartHomeDB()
+        self.db = SmartHomeCSV()
         self._init_ui()
         start_server(self.receive_message)
 
