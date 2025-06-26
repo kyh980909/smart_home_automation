@@ -11,6 +11,7 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from PyQt5.QtCore import pyqtSignal
 
 import communication
 
@@ -25,11 +26,14 @@ recommendation_templates = {
 class ChatBot(QWidget):
     """Simple chatbot interface that sends messages to the main panel."""
 
+    message_received = pyqtSignal(str)
+
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("ChatBot")
         self.resize(400, 300)
         self.history: List[str] = []
+        self.message_received.connect(self.add_message)
         self._init_ui()
         # Start socket server to receive messages from the panel on a
         # different port to avoid clashing with the panel's server
@@ -94,7 +98,7 @@ class ChatBot(QWidget):
     def receive_message(self, message: str) -> None:
         """Handle a message received from the main panel."""
 
-        self.add_message(f"패널: {message}")
+        self.message_received.emit(f"패널: {message}")
 
     def show_recommendation(self, template: str, **kwargs: str) -> None:
         """Display a formatted recommendation message to the user."""

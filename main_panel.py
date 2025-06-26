@@ -1,7 +1,15 @@
 from __future__ import annotations
 
 import sys
-from PyQt5.QtCore import Qt, QTimer, QDateTime, QTime, QDate, QDateTime as QDt
+from PyQt5.QtCore import (
+    Qt,
+    QTimer,
+    QDateTime,
+    QTime,
+    QDate,
+    QDateTime as QDt,
+    pyqtSignal,
+)
 from PyQt5.QtWidgets import (
     QApplication,
     QHBoxLayout,
@@ -41,11 +49,14 @@ from data_generator import (
 class MainPanel(QMainWindow):
     """Main application window for the home control panel."""
 
+    message_received = pyqtSignal(str)
+
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("스마트홈 패널")
         self.resize(1280, 960)
         self.db = SmartHomeCSV()
+        self.message_received.connect(self._handle_chat_message)
         self._init_ui()
         start_server(self.receive_message)
 
@@ -244,6 +255,9 @@ class MainPanel(QMainWindow):
     def receive_message(self, message: str) -> None:
         """Callback for messages received from the chatbot."""
 
+        self.message_received.emit(message)
+
+    def _handle_chat_message(self, message: str) -> None:
         self.control_log.append(f"챗봇: {message}")
         if self.paused_for_chatbot:
             if message.strip() == "CREATE_RULE" and self.pending_event:
@@ -251,7 +265,9 @@ class MainPanel(QMainWindow):
                 act = self.pending_event["value"]
                 dev = self.pending_event["device"]
                 self.db.save_rule(f"time == {cond}", f"{dev} {act}")
-                self.control_log.append(f"규칙 생성: time == {cond} -> {dev} {act}")
+                self.control_log.append(
+                    f"규칙 생성: time == {cond} -> {dev} {act}"
+                )
             self.pending_event = None
             self.paused_for_chatbot = False
             if self.service_running and not self.step_mode:
