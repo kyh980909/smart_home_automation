@@ -37,7 +37,8 @@ from typing import Any
 
 from communication import start_server, send_message
 from csv_database import SmartHomeCSV
-from floor_plan import FloorPlanView, devices, PlanDevice
+from floor_plan import FloorPlanView, devices, PlanDevice, ExtendedFloorPlanView, extended_devices
+from extended_devices import DeviceType, ExtendedPlanDevice
 from data_generator import (
     add_variation,
     analyze_pattern,
@@ -52,11 +53,12 @@ class MainPanel(QMainWindow):
 
     message_received = pyqtSignal(str)
 
-    def __init__(self) -> None:
+    def __init__(self, use_extended_devices=False) -> None:
         super().__init__()
         self.setWindowTitle("스마트홈 패널")
         self.resize(1280, 960)
         self.db = SmartHomeCSV()
+        self.use_extended_devices = use_extended_devices
         self.message_received.connect(self._handle_chat_message)
         self._init_ui()
         start_server(self.receive_message)
@@ -78,7 +80,10 @@ class MainPanel(QMainWindow):
         root_layout.addLayout(content_layout, 1)
 
         # Floor plan view with interactive icons
-        self.floor_view = FloorPlanView(devices, callback=self.device_clicked)
+        if self.use_extended_devices:
+            self.floor_view = ExtendedFloorPlanView(extended_devices, callback=self.device_clicked)
+        else:
+            self.floor_view = FloorPlanView(devices, callback=self.device_clicked)
         content_layout.addWidget(self.floor_view, 3)
 
         # Right side (clock and control panel)
@@ -116,13 +121,24 @@ class MainPanel(QMainWindow):
             QDateTime.currentDateTime().toString("yyyy-MM-dd hh:mm:ss")
         )
 
-    def device_clicked(self, device: PlanDevice) -> None:
-        state = "ON" if device.state else "OFF"
-        self.control_log.append(f"디바이스 '{device.name}'을(를) {state} 상태로 변경했습니다.")
-        self.db.update_device_status(device.name, state)
-        ts = self.sim_time if self.service_running and self.sim_time else datetime.now()
+    def device_clicked(self, device) -> None:
+        """디바이스 클릭 핵들러 (기존 및 확장 디바이스 지원)"""
+        if self.use_extended_devices and isinstance(device, ExtendedPlanDevice):
+            # 확장된 디바이스 처리
+            state_text = device.get_status_text()
+            self.control_log.append(f"디바이스 '{device.name}'을(를) {state_text} 상태로 변경했습니다.")
+            
+            state = "ON" if device.state else "OFF"
+            self.db.update_device_status(device.name, state, device.type.value)
+        else:
+            # 기존 디바이스 처리
+            state = "ON" if device.state else "OFF"
+            self.control_log.append(f"디바이스 '{device.name}'을(를) {state} 상태로 변경했습니다.")
+            self.db.update_device_status(device.name, state)
+        
+        # 패턴 기록
+        ts = self.sim_time if hasattr(self, 'sim_time') and self.sim_time else datetime.now()
         self.db.save_pattern(ts, device.name, state)
-        self.service_log.append(f"{ts.strftime('%Y-%m-%d %H:%M')} - {device.name} {state}")
 
 
     # ------------------------------------------------------------------
@@ -346,8 +362,91 @@ class MainPanel(QMainWindow):
 
     def receive_message(self, message: str) -> None:
         """Callback for messages received from the chatbot."""
-
         self.control_log.append(f"챗봇: {message}")
+        
+        # 개선된 챗봇 메시지 처리
+        self._handle_chatbot_command(message)
+
+    def _handle_chatbot_command(self, message: str) -> None:
+        """챗봇으로부터의 명령어 처리"""
+        message_lower = message.lower().strip()
+        
+        # 상태 요청 처리
+        if "request_status" in message_lower:
+            self._send_device_status_to_chatbot()
+        
+        # 디바이스 제어 명령 처리
+        elif "control:" in message_lower:
+            self._process_device_control_command(message)
+        
+        # 기타 대화 및 반응
+        else:
+            self._handle_general_chat_message(message)
+    
+    def _send_device_status_to_chatbot(self) -> None:
+        """디바이스 상태를 챗봇에게 전송"""
+        device_list = extended_devices if self.use_extended_devices else devices
+        status_info = []
+        
+        for device in device_list:
+            if self.use_extended_devices:
+                status = device.get_status_text()
+                status_info.append(f"{device.name}: {status}")
+            else:
+                state = "ON" if device.state else "OFF"
+                status_info.append(f"{device.name}: {state}")
+        
+        status_message = "\n".join(status_info)
+        send_message(f"DEVICE_STATUS:\n{status_message}", port=7778)
+    
+    def _process_device_control_command(self, message: str) -> None:
+        """디바이스 제어 명령 처리"""
+        try:
+            # CONTROL:명령:원본텍스트 형식으로 파싱
+            parts = message.split(":", 2)
+            if len(parts) >= 2:
+                command = parts[1].strip()
+                self._execute_chatbot_device_command(command)
+        except Exception as e:
+            self.control_log.append(f"명령 처리 오류: {str(e)}")
+    
+    def _execute_chatbot_device_command(self, command: str) -> None:
+        """챗봇 디바이스 명령 실행"""
+        device_list = extended_devices if self.use_extended_devices else devices
+        
+        if command == 'all_lights_on':
+            for device in device_list:
+                if ("조명" in device.name):
+                    device.state = True
+            self.control_log.append("챗봇 명령: 모든 조명을 켰습니다.")
+            
+        elif command == 'all_lights_off':
+            for device in device_list:
+                if ("조명" in device.name):
+                    device.state = False
+            self.control_log.append("챗봇 명령: 모든 조명을 껐습니다.")
+            
+        elif command.startswith('light_'):
+            # 개별 조명 제어 처리
+            action = 'on' if command.endswith('_on') else 'off'
+            # 여기에 더 상세한 로직 추가 가능
+            
+        elif command.startswith('aircon_'):
+            # 에어컨 제어 처리
+            aircon_devices = [d for d in device_list if '에어컨' in d.name]
+            for aircon in aircon_devices:
+                if command == 'aircon_on':
+                    aircon.state = True
+                elif command == 'aircon_off':
+                    aircon.state = False
+        
+        # 화면 업데이트
+        self.floor_view.refresh()
+    
+    def _handle_general_chat_message(self, message: str) -> None:
+        """일반 대화 메시지 처리"""
+        # 기존 처리 로직 유지
+        pass
 
     def _handle_chat_message(self, message: str) -> None:
         self.control_log.append(f"챗봇: {message}")

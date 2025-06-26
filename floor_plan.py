@@ -59,11 +59,6 @@ class ExtendedDeviceItem(QGraphicsEllipseItem):
         """
         마우스 클릭 시 디바이스 상태를 토글
         """
-        # 센서 타입은 클릭으로 제어하지 않음
-        if self.device.type in [DeviceType.TEMPERATURE_SENSOR, DeviceType.HUMIDITY_SENSOR, 
-                               DeviceType.MOTION_SENSOR, DeviceType.DOOR_SENSOR]:
-            return
-            
         self.device.state = not self.device.state  # 상태 반전
         self.update_display()  # 표시 업데이트
         if self.callback:
@@ -89,18 +84,8 @@ class ExtendedDeviceItem(QGraphicsEllipseItem):
         디바이스 상태에 따라 아이콘 색상과 투명도, 상태 정보 업데이트
         """
         # 상태에 따라 색상 결정
-        if self.device.type == DeviceType.REFRIGERATOR:
-            # 냉장고는 항상 켜져있음
-            color = EXTENDED_COLOR_ON[self.device.type]
-            opacity = 1.0
-        elif self.device.type in [DeviceType.TEMPERATURE_SENSOR, DeviceType.HUMIDITY_SENSOR]:
-            # 센서는 항상 활성 상태로 표시
-            color = EXTENDED_COLOR_ON[self.device.type]
-            opacity = 1.0
-        else:
-            # 일반 디바이스는 ON/OFF 상태에 따라
-            color = EXTENDED_COLOR_ON.get(self.device.type, QColor("#FFD700")) if self.device.state else EXTENDED_COLOR_OFF
-            opacity = 1.0 if self.device.state else 0.5
+        color = EXTENDED_COLOR_ON.get(self.device.type, QColor("#FFD700")) if self.device.state else EXTENDED_COLOR_OFF
+        opacity = 1.0 if self.device.state else 0.5
         
         self.setBrush(color)  # 아이콘 색상 설정
         self.setOpacity(opacity)  # 투명도 설정
@@ -114,9 +99,7 @@ class ExtendedDeviceItem(QGraphicsEllipseItem):
         self.status_item.setPos(-status_rect.width()/2, DEVICE_ICON_SIZE/2 + 20)
         
         # 상태에 따라 텍스트 색상 조정
-        if self.device.state or self.device.type in [DeviceType.REFRIGERATOR, DeviceType.TEMPERATURE_SENSOR, 
-                                                    DeviceType.HUMIDITY_SENSOR, DeviceType.MOTION_SENSOR, 
-                                                    DeviceType.DOOR_SENSOR]:
+        if self.device.state:
             self.text_item.setDefaultTextColor(QColor("#000000"))
             self.status_item.setDefaultTextColor(QColor("#333333"))
         else:
