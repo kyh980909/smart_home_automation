@@ -11,7 +11,7 @@ from typing import Any, Callable, Dict
 class Communicator:
     """Simple JSON socket communicator."""
 
-    def __init__(self, port: int = 5555) -> None:
+    def __init__(self, port: int = 7777) -> None:
         self.port = port
         self.host = "127.0.0.1"
 

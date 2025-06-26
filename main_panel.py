@@ -44,7 +44,7 @@ class MainPanel(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("스마트홈 패널")
-        self.resize(900, 600)
+        self.resize(1280, 960)
         self.db = SmartHomeDB()
         self._init_ui()
         start_server(self.receive_message)
