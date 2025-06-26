@@ -44,6 +44,7 @@ from data_generator import (
     load_from_csv,
     save_to_csv,
 )
+from time_series_graph import TimeSeriesChart, generate_sample_data
 
 
 class MainPanel(QMainWindow):
@@ -68,7 +69,7 @@ class MainPanel(QMainWindow):
 
         # Top tabs
         self.tabs = QTabWidget()
-        for name in ["학습데이터 생성", "학습", "서비스", "조회", "환경설정"]:
+        for name in ["학습데이터 생성", "학습", "서비스", "조회", "그래프", "환경설정"]:
             self.tabs.addTab(QWidget(), name)
         root_layout.addWidget(self.tabs)
 
@@ -107,6 +108,7 @@ class MainPanel(QMainWindow):
         self._init_tab_learning()
         self._init_tab_service()
         self._init_tab_query()
+        self._init_tab_graph()
         self._init_tab_settings()
 
     def update_clock(self) -> None:
@@ -238,8 +240,50 @@ class MainPanel(QMainWindow):
         layout.addWidget(self.query_table, 1)
 
 
+    def _init_tab_graph(self) -> None:
+        """그래프 탭 초기화 - 시계열 데이터 시각화"""
+        tab = self.tabs.widget(4)  # 그래프 탭
+        layout = QVBoxLayout(tab)
+        
+        # 그래프 제어 버튼들
+        control_layout = QHBoxLayout()
+        
+        # 디바이스 선택
+        self.graph_device_combo = QComboBox()
+        self.graph_device_combo.addItem("전체 디바이스")
+        for d in devices:
+            self.graph_device_combo.addItem(d.name)
+        control_layout.addWidget(QLabel("디바이스:"))
+        control_layout.addWidget(self.graph_device_combo)
+        
+        # 그래프 타입 선택
+        self.graph_type_combo = QComboBox()
+        self.graph_type_combo.addItems(["사용 패턴", "온도 추이", "일일 요약"])
+        control_layout.addWidget(QLabel("그래프 타입:"))
+        control_layout.addWidget(self.graph_type_combo)
+        
+        # 새로고침 버튼
+        refresh_btn = QPushButton("그래프 새로고침")
+        refresh_btn.clicked.connect(self.refresh_graph)
+        control_layout.addWidget(refresh_btn)
+        
+        # 샘플 데이터 생성 버튼
+        sample_btn = QPushButton("샘플 데이터 보기")
+        sample_btn.clicked.connect(self.show_sample_graph)
+        control_layout.addWidget(sample_btn)
+        
+        control_layout.addStretch()
+        layout.addLayout(control_layout)
+        
+        # 그래프 위젯
+        self.time_series_chart = TimeSeriesChart(parent=tab, width=12, height=8)
+        layout.addWidget(self.time_series_chart)
+        
+        # 초기 샘플 그래프 표시
+        self.show_sample_graph()
+
     def _init_tab_settings(self) -> None:
-        tab = self.tabs.widget(4)
+        tab = self.tabs.widget(5)  # 환경설정 탭
         layout = QVBoxLayout(tab)
 
         self.sensitivity_spin = QSpinBox()
@@ -252,10 +296,58 @@ class MainPanel(QMainWindow):
         self.chat_notify.setChecked(True)
         layout.addWidget(self.chat_notify)
 
+    # ------------------------------------------------------------------
+    # 그래프 관련 메서드
+    
+    def refresh_graph(self) -> None:
+        """실제 데이터로 그래프를 새로고침"""
+        if not hasattr(self, 'loaded_events') or not self.loaded_events:
+            self.control_log.append("표시할 데이터가 없습니다. 학습 탭에서 데이터를 먼저 불러오세요.")
+            return
+            
+        device_name = self.graph_device_combo.currentText()
+        graph_type = self.graph_type_combo.currentText()
+        
+        if device_name == "전체 디바이스":
+            device_name = None
+            
+        try:
+            if graph_type == "사용 패턴":
+                self.time_series_chart.plot_device_usage(self.loaded_events, device_name)
+            elif graph_type == "온도 추이":
+                self.time_series_chart.plot_temperature_trend(self.loaded_events)
+            elif graph_type == "일일 요약":
+                self.time_series_chart.plot_daily_summary(self.loaded_events)
+                
+            self.control_log.append(f"{graph_type} 그래프를 업데이트했습니다.")
+        except Exception as e:
+            self.control_log.append(f"그래프 업데이트 오류: {str(e)}")
+    
+    def show_sample_graph(self) -> None:
+        """샘플 데이터로 그래프 표시"""
+        sample_data = generate_sample_data()
+        device_name = self.graph_device_combo.currentText()
+        graph_type = self.graph_type_combo.currentText()
+        
+        if device_name == "전체 디바이스":
+            device_name = None
+            
+        try:
+            if graph_type == "사용 패턴":
+                self.time_series_chart.plot_device_usage(sample_data, device_name)
+            elif graph_type == "온도 추이":
+                self.time_series_chart.plot_temperature_trend(sample_data)
+            elif graph_type == "일일 요약":
+                self.time_series_chart.plot_daily_summary(sample_data)
+                
+            self.control_log.append(f"샘플 {graph_type} 그래프를 표시했습니다.")
+        except Exception as e:
+            self.control_log.append(f"샘플 그래프 오류: {str(e)}")
+
     def receive_message(self, message: str) -> None:
         """Callback for messages received from the chatbot."""
 
-        self.message_received.emit(message)
+        self.control_log.append(f"챗봇: {message}")
 
     def _handle_chat_message(self, message: str) -> None:
         self.control_log.append(f"챗봇: {message}")

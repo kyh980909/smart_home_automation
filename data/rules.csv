@@ -1,1 +1,2 @@
 id,condition,action,enabled
+1,time == 18:42,주방 조명 ON,1
