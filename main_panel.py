@@ -351,7 +351,8 @@ class MainPanel(QMainWindow):
         
         # 그래프 타입 선택
         self.graph_type_combo = QComboBox()
-        self.graph_type_combo.addItems(["사용 패턴", "온도 추이", "일일 요약"])
+        # 온도 추이 제거
+        self.graph_type_combo.addItems(["사용 패턴", "일일 요약"])
         control_layout.addWidget(QLabel("그래프 타입:"))
         control_layout.addWidget(self.graph_type_combo)
         
@@ -407,8 +408,6 @@ class MainPanel(QMainWindow):
         try:
             if graph_type == "사용 패턴":
                 self.time_series_chart.plot_device_usage(self.loaded_events, device_name)
-            elif graph_type == "온도 추이":
-                self.time_series_chart.plot_temperature_trend(self.loaded_events)
             elif graph_type == "일일 요약":
                 self.time_series_chart.plot_daily_summary(self.loaded_events)
                 
@@ -428,8 +427,6 @@ class MainPanel(QMainWindow):
         try:
             if graph_type == "사용 패턴":
                 self.time_series_chart.plot_device_usage(sample_data, device_name)
-            elif graph_type == "온도 추이":
-                self.time_series_chart.plot_temperature_trend(sample_data)
             elif graph_type == "일일 요약":
                 self.time_series_chart.plot_daily_summary(sample_data)
                 
