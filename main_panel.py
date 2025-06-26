@@ -31,6 +31,7 @@ from PyQt5.QtWidgets import (
     QGroupBox,
     QSlider,
     QWidget,
+    QScrollArea,
 )
 
 from datetime import datetime, date, timedelta
@@ -68,7 +69,10 @@ class MainPanel(QMainWindow):
     # UI setup
     def _init_ui(self) -> None:
         central = QWidget()
-        self.setCentralWidget(central)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(central)
+        self.setCentralWidget(scroll)
         root_layout = QVBoxLayout(central)
 
         # Top tabs
