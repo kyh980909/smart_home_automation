@@ -28,6 +28,8 @@ from PyQt5.QtWidgets import (
     QTabWidget,
     QTextEdit,
     QVBoxLayout,
+    QGroupBox,
+    QSlider,
     QWidget,
 )
 
@@ -179,6 +181,77 @@ class MainPanel(QMainWindow):
         save_btn.clicked.connect(self.save_csv)
         btn_layout.addWidget(save_btn)
         layout.addLayout(btn_layout)
+
+        # ----- Advanced generation controls -----
+        self.season = "봄"
+        self.gender = "M"
+        self.age_group = "장년"
+
+        adv_box = QGroupBox("상세 설정")
+        adv_layout = QVBoxLayout(adv_box)
+
+        # Season buttons
+        season_group = QGroupBox("계절요인 적용")
+        s_layout = QHBoxLayout(season_group)
+        self.season_buttons = {}
+        for s in ["봄", "여름", "가을", "겨울"]:
+            btn = QPushButton(s)
+            btn.setCheckable(True)
+            btn.clicked.connect(lambda chk, val=s: self._set_season(val))
+            self.season_buttons[s] = btn
+            s_layout.addWidget(btn)
+        self.season_buttons[self.season].setChecked(True)
+        adv_layout.addWidget(season_group)
+
+        # Gender buttons
+        gender_group = QGroupBox("거주자 성별")
+        g_layout = QHBoxLayout(gender_group)
+        self.gender_buttons = {}
+        for g in ["M", "F"]:
+            btn = QPushButton(g)
+            btn.setCheckable(True)
+            btn.clicked.connect(lambda chk, val=g: self._set_gender(val))
+            self.gender_buttons[g] = btn
+            g_layout.addWidget(btn)
+        self.gender_buttons[self.gender].setChecked(True)
+        adv_layout.addWidget(gender_group)
+
+        # Age buttons
+        age_group = QGroupBox("연령대")
+        a_layout = QHBoxLayout(age_group)
+        self.age_buttons = {}
+        for a in ["청년", "장년", "노년"]:
+            btn = QPushButton(a)
+            btn.setCheckable(True)
+            btn.clicked.connect(lambda chk, val=a: self._set_age(val))
+            self.age_buttons[a] = btn
+            a_layout.addWidget(btn)
+        self.age_buttons[self.age_group].setChecked(True)
+        adv_layout.addWidget(age_group)
+
+        self.complexity_slider = QSlider(Qt.Horizontal)
+        self.complexity_slider.setMinimum(1)
+        self.complexity_slider.setMaximum(10)
+        self.complexity_slider.setValue(5)
+        adv_layout.addWidget(QLabel("패턴 복잡도"))
+        adv_layout.addWidget(self.complexity_slider)
+
+        layout.addWidget(adv_box)
+
+        adv_btns = QHBoxLayout()
+        sim_btn = QPushButton("유사 생활패턴 생성(Week day)")
+        sim_btn.clicked.connect(self.generate_similar_patterns_btn)
+        adv_btns.addWidget(sim_btn)
+
+        detail_btn = QPushButton("상세설정기반 생성")
+        detail_btn.clicked.connect(self.generate_detailed_patterns_btn)
+        adv_btns.addWidget(detail_btn)
+
+        ai_btn = QPushButton("생성AI로 생성해보기(Trial version)")
+        ai_btn.clicked.connect(self.generate_ai_patterns_btn)
+        adv_btns.addWidget(ai_btn)
+
+        layout.addLayout(adv_btns)
 
         self.base_events: list[dict[str, Any]] = []
         self.generated_events: list[dict[str, Any]] = []
@@ -514,6 +587,54 @@ class MainPanel(QMainWindow):
             for t, count in times.items():
                 lines.append(f"{device}: 매일 {t} 패턴 {count}회 발견")
         self.analysis_text.setPlainText("\n".join(lines) or "패턴 없음")
+
+    # ------------------------------------------------------------------
+    # Advanced pattern generation helpers
+
+    def _set_season(self, season: str) -> None:
+        self.season = season
+        for s, btn in self.season_buttons.items():
+            btn.setChecked(s == season)
+
+    def _set_gender(self, gender: str) -> None:
+        self.gender = gender
+        for g, btn in self.gender_buttons.items():
+            btn.setChecked(g == gender)
+
+    def _set_age(self, age: str) -> None:
+        self.age_group = age
+        for a, btn in self.age_buttons.items():
+            btn.setChecked(a == age)
+
+    def _collect_settings(self) -> dict:
+        return {
+            "season": self.season,
+            "demographics": {"age": self.age_group, "gender": self.gender},
+            "complexity": self.complexity_slider.value() / 10.0,
+            "start_date": date.today(),
+        }
+
+    def generate_similar_patterns_btn(self) -> None:
+        from advanced_pattern_generator import AdvancedPatternGenerator
+
+        generator = AdvancedPatternGenerator()
+        base_pattern = [
+            {"time": ev["time"].toPyTime(), "device": ev["device"], "value": ev["value"]}
+            for ev in self.base_events
+        ]
+        self.generated_events = generator.generate_weekday_patterns(base_pattern, self._collect_settings())
+        self.control_log.append("유사 생활패턴을 생성했습니다.")
+
+    def generate_detailed_patterns_btn(self) -> None:
+        self.generate_similar_patterns_btn()
+        self.control_log.append("상세 설정을 적용했습니다.")
+
+    def generate_ai_patterns_btn(self) -> None:
+        from advanced_pattern_generator import AdvancedPatternGenerator
+
+        generator = AdvancedPatternGenerator()
+        self.generated_events = generator.ai_generate_realistic_pattern(self._collect_settings())
+        self.control_log.append("AI 기반 패턴을 생성했습니다.")
 
     # ----- service -----
 
