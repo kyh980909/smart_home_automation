@@ -402,7 +402,10 @@ class MainPanel(QMainWindow):
             and self.detected_patterns[device_name].get(time_key)
             and (device_name, time_key) not in self.sent_patterns
         ):
-            send_message(f"패턴 감지: {device_name} {time_key} {value}")
+            # Send the notification to the chatbot's server running on port 7778
+            send_message(
+                f"패턴 감지: {device_name} {time_key} {value}", port=7778
+            )
             self.sent_patterns.add((device_name, time_key))
             self.pending_event = event
             self.paused_for_chatbot = True
