@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import socket
 import threading
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, Optional
 
 
 class Communicator:
@@ -20,8 +20,8 @@ class Communicator:
         self,
         message_handler: Callable[[Dict[str, Any]], None],
         *,
-        host: str | None = None,
-        port: int | None = None,
+        host: Optional[str] = None,
+        port: Optional[int] = None,
     ) -> None:
         """Start a background server that invokes ``message_handler`` for each message.
 
@@ -89,8 +89,8 @@ _default = Communicator()
 def start_server(
     on_message: Callable[[str], None],
     *,
-    host: str | None = None,
-    port: int | None = None,
+    host: Optional[str] = None,
+    port: Optional[int] = None,
 ) -> None:
     """Start a simple server that forwards only the message text to ``on_message``.
 
@@ -116,8 +116,8 @@ def start_server(
 def send_message(
     message: str,
     *,
-    host: str | None = None,
-    port: int | None = None,
+    host: Optional[str] = None,
+    port: Optional[int] = None,
 ) -> None:
     """Send a plain text ``message`` to the default server or the specified address."""
     _default.send_message(host or _default.host, port or _default.port, {"type": "text", "data": message})

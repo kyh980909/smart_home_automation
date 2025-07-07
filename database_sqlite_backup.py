@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sqlite3
 from datetime import datetime
-from typing import List, Tuple
+from typing import List, Tuple, Optional, Union
 
 
 class SmartHomeDB:
@@ -50,7 +50,7 @@ class SmartHomeDB:
 
     # ------------------------------------------------------------------
     # Pattern storage helpers
-    def save_pattern(self, timestamp: datetime | str, device: str, action: str) -> None:
+    def save_pattern(self, timestamp: Union[datetime, str], device: str, action: str) -> None:
         """Insert a usage pattern entry."""
 
         if isinstance(timestamp, datetime):
@@ -61,7 +61,7 @@ class SmartHomeDB:
         )
         self.conn.commit()
 
-    def get_patterns(self, start_date: datetime | str, end_date: datetime | str) -> List[Tuple]:
+    def get_patterns(self, start_date: Union[datetime, str], end_date: Union[datetime, str]) -> List[Tuple]:
         """Return pattern rows between ``start_date`` and ``end_date``."""
 
         if isinstance(start_date, datetime):
@@ -95,7 +95,7 @@ class SmartHomeDB:
 
     # ------------------------------------------------------------------
     # Device helpers
-    def update_device_status(self, device: str, status: str, type_: str | None = None) -> None:
+    def update_device_status(self, device: str, status: str, type_: Optional[str] = None) -> None:
         """Update status for ``device``; create the row if needed."""
 
         self.conn.execute(

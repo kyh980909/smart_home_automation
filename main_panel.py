@@ -36,7 +36,7 @@ from PyQt5.QtWidgets import (
 
 from datetime import datetime, date, timedelta
 
-from typing import Any
+from typing import Any, Optional
 
 from communication import start_server, send_message
 from csv_database import SmartHomeCSV
@@ -314,9 +314,9 @@ class MainPanel(QMainWindow):
         self.service_running = False
         self.step_mode = False
         self.paused_for_chatbot = False
-        self.pending_event: dict | None = None
-        self.sim_time: datetime | None = None
-        self.sim_end_time: datetime | None = None
+        self.pending_event: Optional[dict] = None
+        self.sim_time: Optional[datetime] = None
+        self.sim_end_time: Optional[datetime] = None
         self.service_index = 0
 
 

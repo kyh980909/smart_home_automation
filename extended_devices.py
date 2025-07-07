@@ -5,7 +5,7 @@
 """
 
 from dataclasses import dataclass
-from typing import Union, Dict, Any
+from typing import Union, Dict, Any, Optional
 from enum import Enum
 
 
@@ -32,8 +32,8 @@ class ExtendedPlanDevice:
     y: int                              # 평면도상 Y 좌표
     state: bool = False                 # 기본 ON/OFF 상태
     properties: Dict[str, Any] = None   # 추가 속성들
-    icon_on: str | None = None          # ON 상태 아이콘 경로
-    icon_off: str | None = None         # OFF 상태 아이콘 경로
+    icon_on: Optional[str] = None       # ON 상태 아이콘 경로
+    icon_off: Optional[str] = None      # OFF 상태 아이콘 경로
     
     def __post_init__(self):
         if self.properties is None:
@@ -106,7 +106,7 @@ EXTENDED_COLOR_ON = {
 EXTENDED_COLOR_OFF = "#808080"  # 모든 디바이스 꺼진 상태: 회색
 
 
-def get_device_by_id(device_id: int) -> Union[ExtendedPlanDevice, None]:
+def get_device_by_id(device_id: int) -> Optional[ExtendedPlanDevice]:
     """ID로 디바이스 찾기"""
     for device in extended_devices:
         if device.id == device_id:

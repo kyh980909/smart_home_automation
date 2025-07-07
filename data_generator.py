@@ -5,7 +5,7 @@ from __future__ import annotations
 import csv
 import random
 from datetime import datetime, date, time, timedelta
-from typing import Iterable, List, Dict, Any
+from typing import Iterable, List, Dict, Any, Union
 
 __all__ = [
     "generate_daily_pattern",
@@ -19,7 +19,7 @@ __all__ = [
 Event = Dict[str, Any]
 
 
-def _ensure_date(day: date | str) -> date:
+def _ensure_date(day: Union[date, str]) -> date:
     """Return ``day`` as :class:`~datetime.date`."""
 
     if isinstance(day, date):
@@ -27,7 +27,7 @@ def _ensure_date(day: date | str) -> date:
     return datetime.strptime(str(day), "%Y-%m-%d").date()
 
 
-def generate_daily_pattern(day: date | str) -> List[Event]:
+def generate_daily_pattern(day: Union[date, str]) -> List[Event]:
     """Return a list of events for a typical day.
 
     The pattern is as follows (24h time):
