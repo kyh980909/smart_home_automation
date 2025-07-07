@@ -58,10 +58,8 @@ python3 chatbot.py      # 챗봇 실행
 
 - `csv_database.py` – CSV 파일 기반의 간단한 저장소로 장치 상태와 패턴, 규칙을 기록합니다.
 - `data_generator.py` – 기본 패턴 생성과 변형, CSV 입출력 기능을 제공합니다.
-- `ai_models.py` – 반복 패턴 탐지와 이상 행동 감지를 위한 보조 클래스를 포함합니다.
 - `communication.py` – 패널과 챗봇 간 TCP 소켓 통신을 담당합니다.
 - `floor_plan.py` – 스마트홈 평면도 시각화 및 디바이스 상호작용 기능을 제공합니다.
-- `database_sqlite_backup.py` – 이전 SQLite 버전 (백업용)
 
 ## 디바이스 아이콘 교체 방법
 
