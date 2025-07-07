@@ -32,6 +32,8 @@ class ExtendedPlanDevice:
     y: int                              # 평면도상 Y 좌표
     state: bool = False                 # 기본 ON/OFF 상태
     properties: Dict[str, Any] = None   # 추가 속성들
+    icon_on: str | None = None          # ON 상태 아이콘 경로
+    icon_off: str | None = None         # OFF 상태 아이콘 경로
     
     def __post_init__(self):
         if self.properties is None:
@@ -69,16 +71,26 @@ class ExtendedPlanDevice:
 
 # 스마트홈 디바이스 목록 (기존 디바이스만, 좌표 변경 금지)
 extended_devices = [
-    ExtendedPlanDevice(1, "거실 조명", DeviceType.LIGHT, "거실", 520, 360),
-    ExtendedPlanDevice(2, "주방 조명", DeviceType.LIGHT, "주방", 520, 180),
-    ExtendedPlanDevice(3, "침실1 조명", DeviceType.LIGHT, "침실1", 680, 490),
-    ExtendedPlanDevice(4, "침실2 조명", DeviceType.LIGHT, "침실2", 190, 490),
-    ExtendedPlanDevice(5, "침실3 조명", DeviceType.LIGHT, "침실3", 190, 300),
-    ExtendedPlanDevice(6, "현관 조명", DeviceType.LIGHT, "현관", 240, 360),
-    ExtendedPlanDevice(7, "에어컨", DeviceType.AIRCON, "거실", 600, 360),
-    ExtendedPlanDevice(8, "가스밸브", DeviceType.GAS, "주방", 460, 145),
-    ExtendedPlanDevice(9, "보일러", DeviceType.BOILER, "발코니", 660, 240),
-    ExtendedPlanDevice(10, "CCTV", DeviceType.CCTV, "현관", 290, 360),
+    ExtendedPlanDevice(1, "거실 조명", DeviceType.LIGHT, "거실", 520, 360,
+                      icon_on="assets/icons/icon_on.png", icon_off="assets/icons/icon_off.png"),
+    ExtendedPlanDevice(2, "주방 조명", DeviceType.LIGHT, "주방", 520, 180,
+                      icon_on="assets/icons/icon_on.png", icon_off="assets/icons/icon_off.png"),
+    ExtendedPlanDevice(3, "침실1 조명", DeviceType.LIGHT, "침실1", 680, 490,
+                      icon_on="assets/icons/icon_on.png", icon_off="assets/icons/icon_off.png"),
+    ExtendedPlanDevice(4, "침실2 조명", DeviceType.LIGHT, "침실2", 190, 490,
+                      icon_on="assets/icons/icon_on.png", icon_off="assets/icons/icon_off.png"),
+    ExtendedPlanDevice(5, "침실3 조명", DeviceType.LIGHT, "침실3", 190, 300,
+                      icon_on="assets/icons/icon_on.png", icon_off="assets/icons/icon_off.png"),
+    ExtendedPlanDevice(6, "현관 조명", DeviceType.LIGHT, "현관", 240, 360,
+                      icon_on="assets/icons/icon_on.png", icon_off="assets/icons/icon_off.png"),
+    ExtendedPlanDevice(7, "에어컨", DeviceType.AIRCON, "거실", 600, 360,
+                      icon_on="assets/icons/icon_on.png", icon_off="assets/icons/icon_off.png"),
+    ExtendedPlanDevice(8, "가스밸브", DeviceType.GAS, "주방", 460, 145,
+                      icon_on="assets/icons/icon_on.png", icon_off="assets/icons/icon_off.png"),
+    ExtendedPlanDevice(9, "보일러", DeviceType.BOILER, "발코니", 660, 240,
+                      icon_on="assets/icons/icon_on.png", icon_off="assets/icons/icon_off.png"),
+    ExtendedPlanDevice(10, "CCTV", DeviceType.CCTV, "현관", 290, 360,
+                      icon_on="assets/icons/icon_on.png", icon_off="assets/icons/icon_off.png"),
 ]
 
 

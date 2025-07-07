@@ -108,9 +108,19 @@ class ExtendedDeviceItem(QGraphicsPixmapItem):
         """
         디바이스 상태에 따라 아이콘 색상과 투명도, 상태 정보 업데이트
         """
-        # 상태에 따라 색상 결정
-        color = EXTENDED_COLOR_ON.get(self.device.type, QColor("#FFD700")) if self.device.state else EXTENDED_COLOR_OFF
-        self.setPixmap(_create_power_icon(color))
+        # 상태에 따라 아이콘 혹은 색상 결정
+        icon_path = self.device.icon_on if self.device.state else self.device.icon_off
+        if icon_path:
+            pix = QPixmap(icon_path)
+            if not pix.isNull():
+                pix = pix.scaled(DEVICE_ICON_SIZE, DEVICE_ICON_SIZE, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                self.setPixmap(pix)
+            else:
+                color = EXTENDED_COLOR_ON.get(self.device.type, QColor("#FFD700")) if self.device.state else EXTENDED_COLOR_OFF
+                self.setPixmap(_create_power_icon(color))
+        else:
+            color = EXTENDED_COLOR_ON.get(self.device.type, QColor("#FFD700")) if self.device.state else EXTENDED_COLOR_OFF
+            self.setPixmap(_create_power_icon(color))
         self.setOpacity(1.0 if self.device.state else 0.5)
         
         # 상태 정보 업데이트
@@ -213,20 +223,32 @@ class PlanDevice:
     x: int
     y: int
     state: bool = False
+    icon_on: str | None = None
+    icon_off: str | None = None
 
 
 # 기존 devices 리스트 (하위 호환성용)
 devices = [
-    PlanDevice(1, "거실 조명", "light", "거실", 420, 460),
-    PlanDevice(2, "주방 조명", "light", "주방", 375, 220),
-    PlanDevice(3, "침실1 조명", "light", "침실1", 720, 430),
-    PlanDevice(4, "침실2 조명", "light", "침실2", 270, 430),
-    PlanDevice(5, "침실3 조명", "light", "침실3", 40, 340),
-    PlanDevice(6, "현관 조명", "light", "현관", 180, 210),
-    PlanDevice(7, "에어컨", "aircon", "거실", 450, 350),
-    PlanDevice(8, "가스밸브", "gas", "주방", 420, 145),
-    PlanDevice(9, "보일러", "boiler", "발코니", 580, 205),
-    PlanDevice(10, "CCTV", "cctv", "현관", 180, 135),
+    PlanDevice(1, "거실 조명", "light", "거실", 420, 460,
+               icon_on="assets/icons/icon_on.png", icon_off="assets/icons/icon_off.png"),
+    PlanDevice(2, "주방 조명", "light", "주방", 375, 220,
+               icon_on="assets/icons/icon_on.png", icon_off="assets/icons/icon_off.png"),
+    PlanDevice(3, "침실1 조명", "light", "침실1", 720, 430,
+               icon_on="assets/icons/icon_on.png", icon_off="assets/icons/icon_off.png"),
+    PlanDevice(4, "침실2 조명", "light", "침실2", 270, 430,
+               icon_on="assets/icons/icon_on.png", icon_off="assets/icons/icon_off.png"),
+    PlanDevice(5, "침실3 조명", "light", "침실3", 40, 340,
+               icon_on="assets/icons/icon_on.png", icon_off="assets/icons/icon_off.png"),
+    PlanDevice(6, "현관 조명", "light", "현관", 180, 210,
+               icon_on="assets/icons/icon_on.png", icon_off="assets/icons/icon_off.png"),
+    PlanDevice(7, "에어컨", "aircon", "거실", 450, 350,
+               icon_on="assets/icons/icon_on.png", icon_off="assets/icons/icon_off.png"),
+    PlanDevice(8, "가스밸브", "gas", "주방", 420, 145,
+               icon_on="assets/icons/icon_on.png", icon_off="assets/icons/icon_off.png"),
+    PlanDevice(9, "보일러", "boiler", "발코니", 580, 205,
+               icon_on="assets/icons/icon_on.png", icon_off="assets/icons/icon_off.png"),
+    PlanDevice(10, "CCTV", "cctv", "현관", 180, 135,
+               icon_on="assets/icons/icon_on.png", icon_off="assets/icons/icon_off.png"),
 ]
 
 # 기존 색상 정의 (하위 호환성용)
@@ -266,8 +288,18 @@ class DeviceItem(QGraphicsPixmapItem):
         super().hoverLeaveEvent(event)
 
     def update_color(self):
-        color = COLOR_ON.get(self.device.type, QColor("#FFD700")) if self.device.state else COLOR_OFF
-        self.setPixmap(_create_power_icon(color))
+        icon_path = self.device.icon_on if self.device.state else self.device.icon_off
+        if icon_path:
+            pix = QPixmap(icon_path)
+            if not pix.isNull():
+                pix = pix.scaled(DEVICE_ICON_SIZE, DEVICE_ICON_SIZE, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                self.setPixmap(pix)
+            else:
+                color = COLOR_ON.get(self.device.type, QColor("#FFD700")) if self.device.state else COLOR_OFF
+                self.setPixmap(_create_power_icon(color))
+        else:
+            color = COLOR_ON.get(self.device.type, QColor("#FFD700")) if self.device.state else COLOR_OFF
+            self.setPixmap(_create_power_icon(color))
         self.setOpacity(1.0 if self.device.state else 0.5)
 
 
