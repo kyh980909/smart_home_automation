@@ -77,7 +77,7 @@ class MainPanel(QMainWindow):
 
         # Top tabs
         self.tabs = QTabWidget()
-        for name in ["학습데이터 생성", "학습", "서비스", "조회", "그래프", "환경설정"]:
+        for name in ["학습데이터 생성", "학습", "서비스", "조회", "패턴결과", "환경설정"]:
             self.tabs.addTab(QWidget(), name)
         root_layout.addWidget(self.tabs)
 
