@@ -63,6 +63,25 @@ python3 chatbot.py      # 챗봇 실행
 - `floor_plan.py` – 스마트홈 평면도 시각화 및 디바이스 상호작용 기능을 제공합니다.
 - `database_sqlite_backup.py` – 이전 SQLite 버전 (백업용)
 
+## 디바이스 아이콘 교체 방법
+
+각 디바이스는 ON/OFF 상태에 사용할 이미지를 지정할 수 있습니다. `extended_devices.py`의 `extended_devices` 리스트(또는 `floor_plan.py`의 `devices` 리스트)를 수정해 `icon_on`과 `icon_off` 경로를 설정하세요. 예시는 다음과 같습니다.
+
+```python
+ExtendedPlanDevice(
+    1,
+    "거실 조명",
+    DeviceType.LIGHT,
+    "거실",
+    520,
+    360,
+    icon_on="assets/icons/icon_on.png",
+    icon_off="assets/icons/icon_off.png",
+)
+```
+
+`assets/icons/` 폴더에 원하는 파일을 직접 추가해 사용하세요.
+
 ## 실행 예시
 
 1. 두 개의 터미널을 열어 각각 아래 명령을 실행합니다.
