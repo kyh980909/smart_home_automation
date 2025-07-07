@@ -6,9 +6,15 @@
 """
 
 from dataclasses import dataclass
-from PyQt5.QtCore import Qt, QPropertyAnimation
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor, QPixmap, QPainter, QFont
-from PyQt5.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsEllipseItem, QGraphicsTextItem
+from PyQt5.QtGui import QPen
+from PyQt5.QtWidgets import (
+    QGraphicsView,
+    QGraphicsScene,
+    QGraphicsTextItem,
+    QGraphicsPixmapItem,
+)
 from extended_devices import ExtendedPlanDevice, extended_devices, EXTENDED_COLOR_ON, EXTENDED_COLOR_OFF, DeviceType
 
 # 평면도 화면 크기 설정
@@ -18,7 +24,26 @@ DEVICE_ICON_SIZE = 45    # 디바이스 아이콘 크기 (픽셀)
 CLICK_AREA_SIZE = 60     # 클릭 가능 영역 크기 (픽셀)
 
 
-class ExtendedDeviceItem(QGraphicsEllipseItem):
+def _create_power_icon(color: QColor) -> QPixmap:
+    """단순 파워 아이콘 Pixmap 생성"""
+    size = DEVICE_ICON_SIZE
+    pix = QPixmap(size, size)
+    pix.fill(Qt.transparent)
+    painter = QPainter(pix)
+    painter.setRenderHint(QPainter.Antialiasing)
+    painter.setBrush(color)
+    painter.setPen(Qt.NoPen)
+    painter.drawEllipse(0, 0, size - 1, size - 1)
+    pen = QPen(QColor("white"))
+    pen.setWidth(3)
+    painter.setPen(pen)
+    painter.drawArc(4, 4, size - 8, size - 8, 45 * 16, 270 * 16)
+    painter.drawLine(size // 2, 4, size // 2, size // 2 + 2)
+    painter.end()
+    return pix
+
+
+class ExtendedDeviceItem(QGraphicsPixmapItem):
     """
     평면도에 표시되는 개별 디바이스 아이콘 클래스 (확장 버전)
     마우스 클릭과 호버 이벤트를 처리하여 디바이스 상태를 제어
@@ -31,8 +56,8 @@ class ExtendedDeviceItem(QGraphicsEllipseItem):
             device: ExtendedPlanDevice 객체
             callback: 디바이스 상태 변경 시 호출될 콜백 함수
         """
-        super().__init__(-DEVICE_ICON_SIZE / 2, -DEVICE_ICON_SIZE / 2,
-                         DEVICE_ICON_SIZE, DEVICE_ICON_SIZE)
+        super().__init__()
+        self.setOffset(-DEVICE_ICON_SIZE / 2, -DEVICE_ICON_SIZE / 2)
         self.device = device
         self.callback = callback
         self.setAcceptHoverEvents(True)  # 마우스 호버 이벤트 활성화
@@ -85,10 +110,8 @@ class ExtendedDeviceItem(QGraphicsEllipseItem):
         """
         # 상태에 따라 색상 결정
         color = EXTENDED_COLOR_ON.get(self.device.type, QColor("#FFD700")) if self.device.state else EXTENDED_COLOR_OFF
-        opacity = 1.0 if self.device.state else 0.5
-        
-        self.setBrush(color)  # 아이콘 색상 설정
-        self.setOpacity(opacity)  # 투명도 설정
+        self.setPixmap(_create_power_icon(color))
+        self.setOpacity(1.0 if self.device.state else 0.5)
         
         # 상태 정보 업데이트
         status_text = self.device.get_status_text()
@@ -217,11 +240,11 @@ COLOR_ON = {
 COLOR_OFF = QColor("#808080")
 
 
-class DeviceItem(QGraphicsEllipseItem):
+class DeviceItem(QGraphicsPixmapItem):
     """기존 DeviceItem 클래스 (하위 호환성용)"""
     def __init__(self, device: PlanDevice, callback=None):
-        super().__init__(-DEVICE_ICON_SIZE / 2, -DEVICE_ICON_SIZE / 2,
-                         DEVICE_ICON_SIZE, DEVICE_ICON_SIZE)
+        super().__init__()
+        self.setOffset(-DEVICE_ICON_SIZE / 2, -DEVICE_ICON_SIZE / 2)
         self.device = device
         self.callback = callback
         self.setAcceptHoverEvents(True)
@@ -244,7 +267,7 @@ class DeviceItem(QGraphicsEllipseItem):
 
     def update_color(self):
         color = COLOR_ON.get(self.device.type, QColor("#FFD700")) if self.device.state else COLOR_OFF
-        self.setBrush(color)
+        self.setPixmap(_create_power_icon(color))
         self.setOpacity(1.0 if self.device.state else 0.5)
 
 
