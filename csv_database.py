@@ -9,7 +9,7 @@ from __future__ import annotations
 import csv
 import os
 from datetime import datetime
-from typing import List, Tuple, Dict, Any
+from typing import List, Tuple, Dict, Any, Optional, Union
 from pathlib import Path
 
 
@@ -57,7 +57,7 @@ class SmartHomeCSV:
     # ------------------------------------------------------------------
     # 패턴 저장 관련 메서드
     
-    def save_pattern(self, timestamp: datetime | str, device: str, action: str) -> None:
+    def save_pattern(self, timestamp: Union[datetime, str], device: str, action: str) -> None:
         """
         사용 패턴 데이터를 CSV 파일에 저장
         
@@ -74,7 +74,7 @@ class SmartHomeCSV:
             writer = csv.writer(f)
             writer.writerow([timestamp, device, action])
 
-    def get_patterns(self, start_date: datetime | str, end_date: datetime | str) -> List[Tuple]:
+    def get_patterns(self, start_date: Union[datetime, str], end_date: Union[datetime, str]) -> List[Tuple]:
         """
         지정된 기간의 패턴 데이터를 반환
         
@@ -164,7 +164,7 @@ class SmartHomeCSV:
     # ------------------------------------------------------------------
     # 디바이스 상태 관리 관련 메서드
     
-    def update_device_status(self, device: str, status: str, type_: str | None = None) -> None:
+    def update_device_status(self, device: str, status: str, type_: Optional[str] = None) -> None:
         """
         디바이스 상태를 업데이트하거나 새로 생성
         
@@ -197,7 +197,7 @@ class SmartHomeCSV:
         # CSV 파일에 저장
         self._save_devices(devices)
 
-    def get_device_status(self, device: str) -> str | None:
+    def get_device_status(self, device: str) -> Optional[str]:
         """
         디바이스의 현재 상태를 반환
         

@@ -6,6 +6,7 @@
 """
 
 from dataclasses import dataclass
+from typing import Optional
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor, QPixmap, QPainter, QFont
 from PyQt5.QtGui import QPen
@@ -223,8 +224,8 @@ class PlanDevice:
     x: int
     y: int
     state: bool = False
-    icon_on: str | None = None
-    icon_off: str | None = None
+    icon_on: Optional[str] = None
+    icon_off: Optional[str] = None
 
 
 # 기존 devices 리스트 (하위 호환성용)
