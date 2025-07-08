@@ -194,19 +194,6 @@ class MainPanel(QMainWindow):
         adv_box = QGroupBox("상세 설정")
         adv_layout = QVBoxLayout(adv_box)
 
-        # Season buttons
-        season_group = QGroupBox("계절요인 적용")
-        s_layout = QHBoxLayout(season_group)
-        self.season_buttons = {}
-        for s in ["봄", "여름", "가을", "겨울"]:
-            btn = QPushButton(s)
-            btn.setCheckable(True)
-            btn.clicked.connect(lambda chk, val=s: self._set_season(val))
-            self.season_buttons[s] = btn
-            s_layout.addWidget(btn)
-        self.season_buttons[self.season].setChecked(True)
-        adv_layout.addWidget(season_group)
-
         # Gender buttons
         gender_group = QGroupBox("거주자 성별")
         g_layout = QHBoxLayout(gender_group)
@@ -232,6 +219,19 @@ class MainPanel(QMainWindow):
             a_layout.addWidget(btn)
         self.age_buttons[self.age_group].setChecked(True)
         adv_layout.addWidget(age_group)
+
+        # Season buttons
+        season_group = QGroupBox("계절요인 적용")
+        s_layout = QHBoxLayout(season_group)
+        self.season_buttons = {}
+        for s in ["봄", "여름", "가을", "겨울"]:
+            btn = QPushButton(s)
+            btn.setCheckable(True)
+            btn.clicked.connect(lambda chk, val=s: self._set_season(val))
+            self.season_buttons[s] = btn
+            s_layout.addWidget(btn)
+        self.season_buttons[self.season].setChecked(True)
+        adv_layout.addWidget(season_group)
 
         self.complexity_slider = QSlider(Qt.Horizontal)
         self.complexity_slider.setMinimum(1)
