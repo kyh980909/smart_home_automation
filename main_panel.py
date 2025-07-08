@@ -89,11 +89,11 @@ class MainPanel(QMainWindow):
         right_layout.setSpacing(10)
         main_layout.addWidget(right_widget, 2)
 
-        # Top tabs
+        # Top tabs centered horizontally
         self.tabs = QTabWidget()
         for name in ["학습데이터 생성", "학습", "서비스", "조회", "패턴결과", "환경설정"]:
             self.tabs.addTab(QWidget(), name)
-        right_layout.addWidget(self.tabs)
+        right_layout.addWidget(self.tabs, alignment=Qt.AlignHCenter)
 
         # Clock / calendar
         self.clock_label = QLabel()
