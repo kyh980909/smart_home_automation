@@ -73,46 +73,42 @@ class MainPanel(QMainWindow):
         scroll.setWidgetResizable(True)
         scroll.setWidget(central)
         self.setCentralWidget(scroll)
-        root_layout = QVBoxLayout(central)
+        # Main layout splits floor plan (left) and everything else (right)
+        main_layout = QHBoxLayout(central)
+
+        # Floor plan view on the left
+        if self.use_extended_devices:
+            self.floor_view = ExtendedFloorPlanView(extended_devices, callback=self.device_clicked)
+        else:
+            self.floor_view = FloorPlanView(devices, callback=self.device_clicked)
+        main_layout.addWidget(self.floor_view, 3)
+
+        # Right side container for tabs and controls
+        right_widget = QWidget()
+        right_layout = QVBoxLayout(right_widget)
+        right_layout.setSpacing(10)
+        main_layout.addWidget(right_widget, 2)
 
         # Top tabs
         self.tabs = QTabWidget()
         for name in ["학습데이터 생성", "학습", "서비스", "조회", "패턴결과", "환경설정"]:
             self.tabs.addTab(QWidget(), name)
-        root_layout.addWidget(self.tabs)
+        right_layout.addWidget(self.tabs)
 
-        # Main content area
-        content_layout = QHBoxLayout()
-        root_layout.addLayout(content_layout, 1)
-
-        # Floor plan view with interactive icons
-        if self.use_extended_devices:
-            self.floor_view = ExtendedFloorPlanView(extended_devices, callback=self.device_clicked)
-        else:
-            self.floor_view = FloorPlanView(devices, callback=self.device_clicked)
-        content_layout.addWidget(self.floor_view, 3)
-
-        # Right side (clock and control panel)
-        side_widget = QWidget()
-        side_layout = QVBoxLayout(side_widget)
-        side_layout.setSpacing(10)
-
-        # Clock / calendar (top)
+        # Clock / calendar
         self.clock_label = QLabel()
         self.clock_label.setAlignment(Qt.AlignCenter)
-        side_layout.addWidget(self.clock_label, 1)
+        right_layout.addWidget(self.clock_label, 1)
 
         timer = QTimer(self)
         timer.timeout.connect(self.update_clock)
         timer.start(1000)
         self.update_clock()
 
-        # Control panel (bottom)
+        # Control panel
         self.control_log = QTextEdit()
         self.control_log.setReadOnly(True)
-        side_layout.addWidget(self.control_log, 1)
-
-        content_layout.addWidget(side_widget, 2)
+        right_layout.addWidget(self.control_log, 1)
 
         # ----- Tabs -----
         self._init_tab_data()
